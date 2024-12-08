@@ -4,19 +4,14 @@ const fs = require("fs");
 const crypto = require("crypto");
 const request = require("request");
 const path = require("path");
-const FormData = require("form-data");
 const proxy = require("selenium-webdriver/proxy");
 const proxyChain = require("proxy-chain");
 require("dotenv").config();
 
 // Cấu trúc tài khoản
-const accounts = [
-  // Format: {user: "email", password: "pass", proxy: "proxy_address"}
-  // Ví dụ:
-  // {user: "user1@example.com", password: "pass1", proxy: "127.0.0.1:8080"},
-  // {user: "user2@example.com", password: "pass2", proxy: "127.0.0.1:8081"}
-];
+const accounts = [];
 
+// Đọc tài khoản từ file JSON hoặc từ ENV
 try {
   const accountsFile = fs.readFileSync('accounts.json', 'utf8');
   const accountsData = JSON.parse(accountsFile);
