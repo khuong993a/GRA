@@ -1,4 +1,4 @@
-const { Builder, By, until, Capabilities } = require("selenium-webdriver");
+const { Builder, By, until } = require("selenium-webdriver");
 const chrome = require("selenium-webdriver/chrome");
 const fs = require("fs");
 const crypto = require("crypto");
@@ -11,7 +11,6 @@ require("dotenv").config();
 // Cấu trúc tài khoản
 const accounts = [];
 
-// Đọc tài khoản từ file JSON hoặc từ ENV
 try {
   const accountsFile = fs.readFileSync('accounts.json', 'utf8');
   const accountsData = JSON.parse(accountsFile);
