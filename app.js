@@ -1,11 +1,9 @@
-const { Builder, By, until, Capabilities } = require("selenium-webdriver")
+const { Builder, By, until } = require("selenium-webdriver")
 const chrome = require("selenium-webdriver/chrome")
-const url = require("url")
 const fs = require("fs")
 const crypto = require("crypto")
 const request = require("request")
 const path = require("path")
-const FormData = require("form-data")
 const proxy = require("selenium-webdriver/proxy")
 const proxyChain = require("proxy-chain")
 require("dotenv").config()
@@ -94,7 +92,6 @@ async function getDriverOptions() {
   options.addArguments("--dns-prefetch-disable")
   options.addArguments("--disable-dev-shm-usage")
   options.addArguments("--disable-ipv6")
-  // options.addArguments("--disable-gpu")
   options.addArguments("--aggressive-cache-discard")
   options.addArguments("--disable-cache")
   options.addArguments("--disable-application-cache")
@@ -180,6 +177,7 @@ async function getProxyIpInfo(driver, proxyUrl) {
     }
 
     console.log("-> Started! Logging in https://app.gradient.network/...")
+
     await driver.get("https://app.gradient.network/")
 
     const emailInput = By.css('[placeholder="Enter Email"]')
@@ -205,12 +203,12 @@ async function getProxyIpInfo(driver, proxyUrl) {
 
     console.log("-> Logged in! Waiting for open extension...")
 
-    // 截图登录状态
-    takeScreenshot(driver, "login.png")
+    // Take a screenshot of the login status
+    await takeScreenshot(driver, "login.png")
 
     await driver.get(`chrome-extension://${extensionId}/popup.html`)
 
-    // 直到找到 "Status" 文本的 div 元素
+    // Until "Status" text div is found
     await driver.wait(
       until.elementLocated(By.xpath('//div[contains(text(), "Status")]')),
       30000
@@ -272,42 +270,18 @@ async function getProxyIpInfo(driver, proxyUrl) {
         "-> Failed to connect! may be the proxy has been banned \nGenerating error report..."
       )
       await generateErrorReport(driver)
-      await driver.quit()
-      process.exit(1)
+    } else {
+      console.log("-> Connected successfully!")
     }
-
-    console.log("-> Connected! Starting rolling...")
-
-    // 截图链接状态
-    takeScreenshot(driver, "connected.png")
-
-    console.log({
-      support_status: supportStatus,
-    })
-
-    console.log("-> Lunched!")
-
-    // keep the process running
-    setInterval(() => {
-      driver.getTitle().then((title) => {
-        console.log(`-> [${USER}] Running...`, title)
-      })
-
-      if (PROXY) {
-        console.log(`-> [${USER}] Running with proxy ${PROXY}...`)
-      } else {
-        console.log(`-> [${USER}] Running without proxy...`)
-      }
-    }, 10000)
   } catch (error) {
-    console.error("Error occurred:", error)
-    // show error line
-    console.error(error.stack)
-
-    if (driver) {
+    console.error("-> Error:", error)
+    if (ALLOW_DEBUG) {
       await generateErrorReport(driver)
-      driver.quit()
-      process.exit(1)
+    }
+    process.exit(1)
+  } finally {
+    if (driver) {
+      await driver.quit()
     }
   }
 })()
