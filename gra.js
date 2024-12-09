@@ -1,13 +1,11 @@
 const fs = require("fs");
 const crypto = require("crypto");
-const request = require("request");
+const axios = require("axios"); // Thay thế cho request
 const path = require("path");
-const FormData = require("form-data");
 const { Builder, By, until, Capabilities } = require("selenium-webdriver");
 const chrome = require("selenium-webdriver/chrome");
 const proxy = require("selenium-webdriver/proxy");
 const proxyChain = require("proxy-chain");
-
 require("dotenv").config();
 
 // Cấu trúc tài khoản
@@ -59,20 +57,17 @@ async function downloadExtension(extensionId) {
     return;
   }
 
-  return new Promise((resolve, reject) => {
-    request({ url, headers, encoding: null }, (error, response, body) => {
-      if (error) {
-        console.error("Error downloading extension:", error);
-        return reject(error);
-      }
-      fs.writeFileSync(EXTENSION_FILENAME, body);
-      if (ALLOW_DEBUG) {
-        const md5 = crypto.createHash("md5").update(body).digest("hex");
-        console.log("-> Extension MD5: " + md5);
-      }
-      resolve();
-    });
-  });
+  try {
+    const response = await axios.get(url, { headers, responseType: 'arraybuffer' });
+    fs.writeFileSync(EXTENSION_FILENAME, response.data);
+    if (ALLOW_DEBUG) {
+      const md5 = crypto.createHash("md5").update(response.data).digest("hex");
+      console.log("-> Extension MD5: " + md5);
+    }
+  } catch (error) {
+    console.error("Error downloading extension:", error);
+    throw error;
+  }
 }
 
 async function takeScreenshot(driver, filename) {
@@ -135,7 +130,7 @@ async function getDriverOptions(account) {
 
 async function runAccount(account) {
   console.log(`-> Bắt đầu tài khoản ${account.user}...`);
-  
+
   const options = await getDriverOptions(account);
   options.addExtensions(path.resolve(__dirname, EXTENSION_FILENAME));
 
@@ -235,7 +230,7 @@ async function runAccount(account) {
 
 async function main() {
   await downloadExtension(extensionId);
-  
+
   const promises = accounts.map(account => runAccount(account));
   await Promise.all(promises);
 }
